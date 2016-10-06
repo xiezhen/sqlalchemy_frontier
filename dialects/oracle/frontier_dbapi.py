@@ -55,8 +55,8 @@ def connect(server_url = None, proxy_url = None):
      frontier://FrontierPrep
 
     Since this module should remain experiment-agnostic, users need to supply the proper way to fetch the complex URLs.
-    '''
-    return Connection('http://cmsfrontier.cern.ch:8000/LumiCalc')
+    '''    
+    return Connection(server_url,proxy_url)
 
 #Exceptions
 
