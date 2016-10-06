@@ -1,0 +1,28 @@
+<site-local-config>
+<site name="T1_CH_CERN">
+   <event-data>
+     <catalog url="trivialcatalog_file:/afs/cern.ch/cms/SITECONF/local/PhEDEx/storage.xml?protocol=rfio"/>
+   </event-data>
+   <local-stage-out>
+     <command value="rfcp-CERN"/>
+     <option value=""/>
+     <catalog url="trivialcatalog_file:/afs/cern.ch/cms/SITECONF/local/PhEDEx/storage.xml?protocol=stageout"/>
+     <se-name value="srm-cms.cern.ch"/>
+   </local-stage-out>
+   <calib-data>
+     <frontier-connect>
+       <proxy url="http://cmst0frontier.cern.ch:3128"/>
+       <proxy url="http://cmst0frontier.cern.ch:3128"/>
+       <proxy url="http://cmst0frontier1.cern.ch:3128"/>
+       <proxy url="http://cmst0frontier2.cern.ch:3128"/>
+       <server url="http://cmsfrontier.cern.ch:8000/FrontierInt"/>
+       <server url="http://cmsfrontier.cern.ch:8000/FrontierInt"/>
+       <server url="http://cmsfrontier1.cern.ch:8000/FrontierInt"/>
+       <server url="http://cmsfrontier2.cern.ch:8000/FrontierInt"/>
+       <server url="http://cmsfrontier3.cern.ch:8000/FrontierInt"/>
+       <server url="http://cmsfrontier4.cern.ch:8000/FrontierInt"/>
+     </frontier-connect>
+     <catalog url=""/>
+   </calib-data>
+</site>
+</site-local-config>
