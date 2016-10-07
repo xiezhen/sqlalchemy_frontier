@@ -5,29 +5,32 @@ import xml.etree.ElementTree as ET
 
 from sqlalchemy import exc
 
-def _buildserverurl(serverlist,proxylist,servlet):
+def _buildserverurl(configdict,servlet):
     serverurl = ''
-    for s in serverlist:
-        pieces = s.split('/')
-        pieces[-1] = servlet
-        piece = '/'.join(pieces)
-        serverurl = serverurl+'(serverurl='+piece+')'
-    for p in proxylist:
-        serverurl = serverurl+'(proxyurl='+p+')'
+    for k,vlist in configdict.items():
+        for value in vlist:
+            if k=='serverurl':
+                pieces = value.split('/')
+                pieces[-1] = servlet
+                piece = '/'.join(pieces)
+                serverurl = serverurl+'(serverurl='+piece+')'
+            else:
+                serverurl = serverurl+'(%s='%(k)+value+')'    
+    #print 'serverurl ',serverurl
     return serverurl
 
 def _frontierconnectparse(filename):
     r = ET.parse(filename)
     root = r.getroot()
+    result = {}
     if root.tag == 'frontier-connect':
         frcon = root
     else:
         frcon = root.find('.//frontier-connect')
-    servers = frcon.findall('./server')
-    server_urls = [x.attrib['url'] for x in servers]
-    proxies = frcon.findall('./proxy')
-    proxy_urls = [x.attrib['url'] for x in proxies]
-    return (server_urls,proxy_urls)
+    for child in frcon:
+        attrname = child.attrib.keys()[0]
+        result.setdefault(child.tag+attrname,[]).append(child.attrib[attrname])
+    return result
 
 class FrontierConnector(Connector):
     driver = 'frontier'
@@ -57,31 +60,32 @@ class FrontierConnector(Connector):
             server_url = 'http://'+urllib.unquote_plus(host)+':'+str(port)+'/'+database
         elif not host and database:
             s = os.path.split(database)
-            if len(s)<2:
+            if len(s)<2 or not s[0] or not s[1]:
                  raise exc.ArgumentError(
-                      "Invalid SQLite URL: %s\n"
-                     "Valid SQLite URL forms are:\n"
+                      "Invalid frontier URL: %s\n"
+                     "Valid frontier URL forms are:\n"
                      " oracle+frontier://server:port/site-local-config.xml/servlet\n"
                      " oracle+frontier:///relative/path/to/site-local-config.xml/servlet\n"
                      " oracle+frontier:////absolute/path/to/site-local-config.xml/servlet" % (url,)
-                 )
+                 )            
             if not os.path.isabs(s[0]):
-                (serverlist,proxylist) = _frontierconnectparse( os.path.abspath(s[0]) )
+                if os.path.isfile(s[0]):
+                    frontierconfig_dict = _frontierconnectparse( os.path.abspath(s[0]) )
+                else:
+                    raise exc.ArgumentError("Invalid frontier config file %s"%(s[0]) )
             else:
-                (serverlist,proxylist) = _frontierconnectparse( s[0] )
+                frontierconfig_dict = _frontierconnectparse( s[0] )
             database = s[1]
-            server_url = _buildserverurl(serverlist,proxylist,database)
+            server_url = _buildserverurl(frontierconfig_dict,database)
             
         else:
             raise exc.ArgumentError(
-                "Invalid SQLite URL: %s\n"
-                "Valid SQLite URL forms are:\n"
+                "Invalid frontier URL: %s\n"
+                "Valid frontier URL forms are:\n"
                 " oracle+frontier://server:port/site-local-config.xml/database\n"
                 " oracle+frontier:///relative/path/to/site-local-config.xml/database\n"
                 " oracle+frontier:////absolute/path/to/site-local-config.xml/database" % (url,))        
         self.url_database = database
-        print 'self.url_database ',self.url_database        
-        print 'server_url ',server_url
         return [
             [server_url,proxy_url],
             {}
