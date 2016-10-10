@@ -4,7 +4,7 @@ import logging
 
 me = os.path.abspath(os.path.dirname(__file__))
 #libfc = ctypes.cdll.LoadLibrary(os.path.join(me,'..','libfrontier_client.so.2'))
-libfc = ctypes.cdll.LoadLibrary(os.path.join(me,'libfrontier_client.so'))
+libfc = ctypes.cdll.LoadLibrary(os.path.join(me,'..','..','..','..','..','libfrontier_client.so'))
 logger = logging.getLogger(__name__)
 
 #wrapped header files: frontier_error.h, frontier.h, frontier-cpp.h
@@ -256,11 +256,8 @@ def fn_gzip_str2urlenc(string):
     
 def frontier_init():
     logger.debug('frontier_client.frontier_init()')
-    logger.debug('AAA')
     retcode = libfc.frontier_init(None, None)
     logger.debug('retcode '+str(retcode))
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-logger.debug('about to init')
 frontier_init()
-logger.debug('after init')
