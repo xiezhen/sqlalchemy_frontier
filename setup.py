@@ -6,6 +6,6 @@ setup(
     name = 'sqlalchemy_frontier',
     version = '2.8.19',
     description = 'sqlalchemy driver for frontier_client',    
-    data_files = [('connectors',['connectors/frontier.py']),('dialects/oracle',['dialects/oracle/__init__.py','dialects/oracle/frontier_client_ctypes.py','dialects/oracle/frontier_dbapi.py','dialects/oracle/frontier.py'])]
+    data_files = [('connectors',['connectors/frontier.py']),('dialects/oracle',['dialects/oracle/frontier_client_ctypes.py','dialects/oracle/frontier_dbapi.py','dialects/oracle/frontier.py'])]
 )
 
