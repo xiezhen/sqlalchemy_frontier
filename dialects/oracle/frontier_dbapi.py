@@ -26,6 +26,11 @@ paramstyle = 'named' #Named style, e.g. ...WHERE name=:name
 _paramchar = '?'
 _separatorchar = ':'
 
+Date = datetime.date
+Time = datetime.time
+Timestamp = datetime.datetime
+Binary = buffer
+
 logger = logging.getLogger(__name__)
 
 # Set initial level to WARN. This so that log statements don't occur in the absense of explicit logging being enabled
@@ -61,6 +66,9 @@ def connect(server_url = None, proxy_url = None):
 #Exceptions
 
 class Error(exceptions.StandardError):
+    pass
+
+class Warning(exceptions.StandardError):
     pass
 
 class InterfaceError(Error):
@@ -345,16 +353,14 @@ class Cursor(object):
         self._check_closed()
 
     def setoutputsize(self, size, column=None):
-        self._check_closed()
-
-    Date = datetime.date
-    Time = datetime.time
+        self._check_closed()    
+    
     def DateFromTicks(ticks):
         return Date(*time.localtime(ticks)[:3])
     def TimeFromTicks(ticks):
         return Time(*time.localtime(ticks)[3:6])
     def TimestampFromTicks(ticks):
         return Timestamp(*time.localtime(ticks)[:6])
-    Binary = buffer
 
+    
     
