@@ -101,7 +101,7 @@ class Connection(object):
         self._closed = False
         self._server_url = server_url
         self._proxy_url = proxy_url
-        self._channel = frontier_client.frontier_createChannel(self._server_url, self._proxy_url)
+        self._channel = frontier_client.py_frontier_createChannel(self._server_url, self._proxy_url)
         
     def _check_closed(self):
         if self._closed:
@@ -114,7 +114,7 @@ class Connection(object):
         '''
         self._check_closed()
         self._closed = True
-        frontier_client.frontier_closeChannel(self._channel)
+        frontier_client.py_frontier_closeChannel(self._channel)
 
     def commit(self):
         '''
@@ -174,7 +174,7 @@ class Cursor(object):
         i = -1
         while True:
             i += 1
-            data_type = frontier_client.frontierRSBlob_getByte(self._result)
+            data_type = frontier_client.py_frontierRSBlob_getByte(self._result)
             #End
             if data_type == frontier_client.BLOB_TYPE_EOR:
                 break
@@ -182,7 +182,7 @@ class Cursor(object):
             if data_type & frontier_client.BLOB_TYPE_NONE:
                 row.append(None)
                 continue
-            value = frontier_client.frontierRSBlob_getByteArray(self._result)
+            value = frontier_client.py_frontierRSBlob_getByteArray(self._result)
             if parse:
                 columnType = self._description[i][1]
                 if 'CHAR' in columnType or columnType == 'ROWID':
@@ -273,17 +273,17 @@ class Cursor(object):
         logger.debug('Query to Frontier = %s', operation)
         
         # Build the URI
-        uri = 'Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=%s'%frontier_client.fn_gzip_str2urlenc(operation)
+        uri = 'Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=%s'%frontier_client.py_fn_gzip_str2urlenc(operation)
         try:
-            frontier_client.frontier_getRawData(self._connection._channel, uri)
+            frontier_client.py_frontier_getRawData(self._connection._channel, uri)
         except frontier_client.FrontierClientError as e:
             self._reset()
             raise ProgrammingError('Error while fetching data: %s' %e)
         oldresult = self._result
-        self._result = frontier_client.frontierRSBlob_open(self._connection._channel, self._result, 1)
+        self._result = frontier_client.py_frontierRSBlob_open(self._connection._channel, self._result, 1)
         if oldresult:
-            frontier_client.frontierRSBlob_close(oldresult)                
-        self._rowcount = frontier_client.frontierRSBlob_getRecNum(self._result)
+            frontier_client.py_frontierRSBlob_close(oldresult)                
+        self._rowcount = frontier_client.py_frontierRSBlob_getRecNum(self._result)
         row = self._fetchone(parse = False)
         self._description = []
         for i in range(0, len(row), 2):
