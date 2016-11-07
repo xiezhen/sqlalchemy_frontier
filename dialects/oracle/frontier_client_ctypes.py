@@ -1,4 +1,5 @@
 import os
+import sys
 import ctypes
 import logging
 
@@ -45,6 +46,13 @@ FRONTIER_MAX_SERVERN = 16
 FRONTIER_MAX_PROXYN = 24
 FRONTIER_MAX_PROXYCONFIGN = 8
 
+class FrontierClientError(Exception):
+    def __init__(self, retcode, message):
+      self.args = (retcode, message)
+
+class FrontierConfig(ctypes.Structure):            
+    _fields_ = [('server', ctypes.c_char_p*FRONTIER_MAX_SERVERN ),('proxy',ctypes.c_char_p*FRONTIER_MAX_PROXYN),('proxyconfig',ctypes.c_char_p*FRONTIER_MAX_PROXYCONFIGN),('server_num',ctypes.c_int),('proxy_num',ctypes.c_int),('proxyconfig_num',ctypes.c_int),('server_cur',ctypes.c_int),('proxy_cur',ctypes.c_int),('proxyconfig_cur',ctypes.c_int),('servers_balanced',ctypes.c_int),('proxies_balanced',ctypes.c_int),('num_backupproxies',ctypes.c_int),('connect_timeout_secs',ctypes.c_int),('read_timeout_secs',ctypes.c_int),('write_timeout_secs',ctypes.c_int),('max_age_secs',ctypes.c_int),('force_reload',ctypes.c_char_p),('freshkey',ctypes.c_char_p),('retrieve_zip_level',ctypes.c_int),('secured',ctypes.c_int),('capath',ctypes.c_char_p),('client_cache_max_result_size',ctypes.c_int),('failover_to_server',ctypes.c_int),('prefer_ip_family',ctypes.c_int)]
+    
 #functions accept any ctypes data instances as arguments and return the default result type specified by the library loader.
 
 # frontier_error.h frontier_getErrorMsg
@@ -156,16 +164,9 @@ frontierConfig_addServer.argtypes = [ctypes.POINTER(FrontierConfig), ctypes.c_ch
 #frontier_config.h frontierConfig_addProxy
 frontierConfig_addProxy = libfc.frontierConfig_addProxy
 frontierConfig_addProxy.restype = ctypes.c_int
-frontierConfig_addProxy.argtypes = [ctypes.POINTER(FrontierConfig), [ctypes.c_char_p]
+frontierConfig_addProxy.argtypes = [ctypes.POINTER(FrontierConfig), ctypes.c_char_p]
                                     
 # wrapped functions , objects
-
-class FrontierClientError(Exception):
-    def __init__(self, retcode, message):
-        self.args = (retcode, message)
-                                    
-class FrontierConfig(ctypes.Structure):            
-    _fields_ = [('server', ctypes.c_char_p*FRONTIER_MAX_SERVERN ),('proxy',ctypes.c_char_p*FRONTIER_MAX_PROXYN),('proxyconfig',ctypes.c_char_p*FRONTIER_MAX_PROXYCONFIGN),('server_num',ctypes.c_int),('proxy_num',ctypes.c_int),('proxyconfig_num',ctypes.c_int),('server_cur',ctypes.c_int),('proxy_cur',ctypes.c_int),('proxyconfig_cur',ctypes.c_int),('servers_balanced',ctypes.c_int),('proxies_balanced',ctypes.c_int),('num_backupproxies',ctypes.c_int),('connect_timeout_secs',ctypes.c_int),('read_timeout_secs',ctypes.c_int),('write_timeout_secs',ctypes.c_int),('max_age_secs',ctypes.c_int),('force_reload',ctypes.c_char_p),('freshkey',ctypes.c_char_p),('retrieve_zip_level',ctypes.c_int),('secured',ctypes.c_int),('capath',ctypes.c_char_p),('client_cache_max_result_size',ctypes.c_int),('failover_to_server',ctypes.c_int),('prefer_ip_family',ctypes.c_int)]
 
 def _build_frontierRSBlob_get(f):
     def wrapper(rsb):
