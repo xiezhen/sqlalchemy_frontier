@@ -6,13 +6,19 @@ import sys
 import logging
 import ctypes
 import os
-import gc
 
-gc.disable()
+libsuffix = None
+if os.name == "posix" and sys.platform == "darwin":
+    libsuffix = ".dylib"
+elif os.name == "posix":
+    libsuffix = ".so"
+else:
+    raise ValueError("Unsupported platform %s"%sys.platform)
 
 me = os.path.abspath(os.path.dirname(__file__))
+libfcname = "libfrontier_client"+libsuffix
 #libfc = ctypes.cdll.LoadLibrary(os.path.join(me,'..','libfrontier_client.dylib'),ctypes.RTLD_GLOBAL)
-libfc = ctypes.CDLL(os.path.join(me,'..','libfrontier_client.dylib'),mode=ctypes.RTLD_GLOBAL)
+libfc = ctypes.CDLL(os.path.join(me,'..',libfcname),mode=ctypes.RTLD_GLOBAL)
 logger = logging.getLogger(__name__)
                                 
 #global defines and constants
