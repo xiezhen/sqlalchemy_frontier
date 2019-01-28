@@ -14,7 +14,7 @@ else:
 me = os.path.abspath(os.path.dirname(__file__))
 libfcname = "libfrontier_client"+libsuffix
 libfc = ctypes.CDLL(os.path.join(me,'..','..','..','..','..',libfcname),mode=ctypes.RTLD_GLOBAL)
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 #wrapped header files: frontier_error.h, frontier.h, frontier-cpp.h
 
@@ -146,6 +146,11 @@ frontier_createChannel = libfc.frontier_createChannel
 frontier_createChannel.restype = ctypes.c_ulong
 frontier_createChannel.argtype = [ctypes.c_char_p,ctypes.c_char,ctypes.POINTER(ctypes.c_int) ]
 
+#frontier.h frontier_setTimeToLive
+frontier_setTimeToLive = libfc.frontier_setTimeToLive
+frontier_setTimeToLive.restype = None
+frontier_setTimeToLive.argtype = [ctypes.c_ulong, ctypes.c_int]
+
 #frontier.h frontier_closeChannel
 frontier_closeChannel = libfc.frontier_closeChannel
 frontier_closeChannel.restype = None
@@ -179,15 +184,18 @@ def _build_frontierRSBlob_get(f):
     return wrapper
 
 def py_frontier_createChannel(serverURL = None, proxyURL = None):
-    logger.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
+    #logging.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
     retcode = ctypes.c_int(FRONTIER_OK)
     channel = libfc.frontier_createChannel(serverURL, proxyURL, ctypes.byref(retcode))
     retcode = retcode.value
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-    logger.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s) = %s', repr(serverURL), repr(proxyURL), channel)
+    logging.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s) = %s', repr(serverURL), repr(proxyURL), channel)
     return channel
 
+def py_frontier_setTimeToLive(channel,ttl):
+    logging.debug('frontier_client.frontier_setTimeToLive(%d, %d)',channel,ttl)
+    libfc.frontier_setTimeToLive(channel,ttl)
 
 def py_frontierConfig_addServer(fconfig, serverURL):
     retcode = ctypes.c_int(FRONTIER_OK)
@@ -195,7 +203,7 @@ def py_frontierConfig_addServer(fconfig, serverURL):
     retcode = retcode.value
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-    logger.debug('frontier_client.frontierConfig_addServer(serverURL = %s) = %s', repr(serverURL), pos)
+    logging.debug('frontier_client.frontierConfig_addServer(serverURL = %s) = %s', repr(serverURL), pos)
     return pos
 
 def py_frontierConfig_addProxy(fconfig, proxyURL):
@@ -204,7 +212,7 @@ def py_frontierConfig_addProxy(fconfig, proxyURL):
     retcode = retcode.value
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-    logger.debug('frontier_client.frontierConfig_addServer(proxyURL = %s) = %s', repr(proxyURL), pos)
+    logging.debug('frontier_client.frontierConfig_addServer(proxyURL = %s) = %s', repr(proxyURL), pos)
     return pos
     
 #def frontier_createChannel2(serverURLs = [], proxyURLs = []):
@@ -222,21 +230,21 @@ def py_frontierConfig_addProxy(fconfig, proxyURL):
 #    retcode = retcode.value
 #    if retcode != FRONTIER_OK:
 #        raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-#    logger.debug('frontier_client.frontier_createChannel2(serverURLs = %s, proxyURLs = %s) = %s', repr(serverURLs), repr(proxyURLs), channel)
+#    logging.debug('frontier_client.frontier_createChannel2(serverURLs = %s, proxyURLs = %s) = %s', repr(serverURLs), repr(proxyURLs), channel)
 #    return channel
 
 def py_frontier_closeChannel(channel):
-    logger.debug('py_frontier_closeChannel(channel = %s)', repr(channel) )
+    logging.debug('py_frontier_closeChannel(channel = %s)', repr(channel) )
     libfc.frontier_closeChannel(channel)
 
 def py_frontier_getRawData(channel, uri):
-    logger.debug('py_frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
+    logging.debug('py_frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
     retcode = libfc.frontier_getRawData(channel, uri)
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
 
 def py_frontierRSBlob_open(channel, oldrs, n):
-    logger.debug('py_frontierRSBlob_open(channel = %s, oldrs = %s, n = %s)', channel, oldrs, n )
+    logging.debug('py_frontierRSBlob_open(channel = %s, oldrs = %s, n = %s)', channel, oldrs, n )
     retcode = ctypes.c_int(FRONTIER_OK)
     rs = libfc.frontierRSBlob_open(channel, oldrs, n, ctypes.byref(retcode) )
     retcode =  retcode.value
@@ -248,7 +256,7 @@ def py_frontierRSBlob_open(channel, oldrs, n):
     return rs
 
 def py_frontierRSBlob_close(rs):
-    logger.debug('py_frontierRSBlob_close(rs = %s)', rs)
+    logging.debug('py_frontierRSBlob_close(rs = %s)', rs)
     retcode = ctypes.c_int(FRONTIER_OK)
     libfc.frontierRSBlob_close(rs, ctypes.byref(retcode) )
     retcode = retcode.value
@@ -277,7 +285,7 @@ def py_frontierRSBlob_getRecNum(rs):
     '''
     get number of returned records
     '''
-    logger.debug('py_frontierRSBlob_getRecNum(rs = %s)', rs )
+    logging.debug('py_frontierRSBlob_getRecNum(rs = %s)', rs )
     return libfc.frontierRSBlob_getRecNum(rs)
 
 def py_frontier_mem_free(address):
@@ -291,7 +299,7 @@ def py_fn_gzip_str2urlenc(string):
     gzip string then 64base encode to ascii 
     fn-zlib.c
     '''
-    logger.debug('py_fn_gzip_str2urlenc(string = %s)', repr(string))
+    logging.debug('py_fn_gzip_str2urlenc(string = %s)', repr(string))
     buf = ctypes.c_void_p()
     buflen = libfc.fn_gzip_str2urlenc(string, len(string), ctypes.byref(buf))
     if buflen < 0 :
@@ -301,9 +309,9 @@ def py_fn_gzip_str2urlenc(string):
     return s
     
 def py_frontier_init():
-    logger.debug('py_frontier_init()')
+    logging.debug('py_frontier_init()')
     retcode = libfc.frontier_init(None, None)
-    logger.debug('retcode '+str(retcode))
+    logging.debug('retcode '+str(retcode))
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
 
