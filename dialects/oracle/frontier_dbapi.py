@@ -15,7 +15,8 @@ try:
     import pytz
 except ImportError:
     pytz = None
-    
+
+
 #Globals
 #These module globals must be defined
 
@@ -31,14 +32,19 @@ Time = datetime.time
 Timestamp = datetime.datetime
 Binary = buffer
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
+#logformatter = logging.Formatter('%(levelname)s %(name)s %(message)s')
 
 # Set initial level to WARN. This so that log statements don't occur in the absense of explicit logging being enabled
 
-if logger.level == logging.NOTSET:
-    logger.setLevel(logging.WARN)
+#if logging.level == logging.NOTSET:
+#    logging.setLevel(logging.WARN)
 
-def connect(server_url = None, proxy_url = None):
+#h = logging.StreamHandler()
+#h.setFormatter(logformatter)
+#logging.addHandler(ch)
+
+def connect(server_url = None, proxy_url = None, ttl = 1 ):
     '''
     connect method is the entry point to the module.
     It takes any arguments
@@ -61,7 +67,7 @@ def connect(server_url = None, proxy_url = None):
 
     Since this module should remain experiment-agnostic, users need to supply the proper way to fetch the complex URLs.
     '''    
-    return Connection(server_url,proxy_url)
+    return Connection(server_url,proxy_url=proxy_url,ttl=ttl)
 
 #Exceptions
 
@@ -97,12 +103,14 @@ class NotSupportedError(DatabaseError):
 
 #Connection Objects
 class Connection(object):
-    def __init__(self, server_url, proxy_url=None):
+    def __init__(self, server_url, proxy_url=None, ttl=1):
         self._closed = False
         self._server_url = server_url
         self._proxy_url = proxy_url
+        self._ttl = ttl
         self._channel = frontier_client.py_frontier_createChannel(self._server_url, self._proxy_url)
-        
+        frontier_client.py_frontier_setTimeToLive(self._channel,ttl)
+
     def _check_closed(self):
         if self._closed:
             raise InterfaceError('The connection is already closed.')
@@ -128,6 +136,13 @@ class Connection(object):
         '''
         self._check_closed()
         return Cursor(self)
+
+    def setTimeToLive(self, ttl):
+        '''
+        Modify ttl of the channel
+        '''
+        self._ttl = ttl
+        frontier_client.py_frontier_setTimeToLive(self._channel,ttl)
 
 def _stringify(parameter):
     if parameter is None:
@@ -165,7 +180,7 @@ class Cursor(object):
         self._connection._check_closed()
         
     def _check_result(self):
-        logger.debug('Cursor._check_result')
+        #logging.debug('Cursor._check_result')
         if self._result is None:
             raise InterfaceError('Fetched from a cursor without executing a query first')
         
@@ -242,8 +257,7 @@ class Cursor(object):
         '''
         self._check_closed()
         variables = re.findall(':[a-zA-Z-0-9_]+', operation)
-        logger.debug('Variables = %s', variables)
-        
+        logging.debug('Variables = %s', variables)
         final_parameters = []
         if parameters is None:
             if len(variables) != 0:
@@ -266,11 +280,11 @@ class Cursor(object):
             if _separatorchar in parameter:
                 raise ProgrammingError("Unsupported character '%s' in parameter(%s)." %(_separatorchar, parameter))
 
-        logger.info('%s', operation)
-        logger.info('%s', final_parameters)
+        logging.debug('%s', operation)
+        logging.debug('%s', final_parameters)
 
         operation = _separatorchar.join([operation] + final_parameters)
-        logger.debug('Query to Frontier = %s', operation)
+        logging.debug('Query to Frontier = %s', operation)
         
         # Build the URI
         uri = 'Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=%s'%frontier_client.py_fn_gzip_str2urlenc(operation)
@@ -289,8 +303,8 @@ class Cursor(object):
         for i in range(0, len(row), 2):
             # name, type, display_size, internal_size, precision, scale, null_ok
             self._description.append( (row[i], row[i+1], None, None, None, None, None) )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('Col %s', [x[0] for x in self._description])
+
+        logging.debug('Col %s', [x[0] for x in self._description])
         self._rowpos = 0
             
     def executemany(self, operation, seq_of_parameters ):
@@ -313,7 +327,7 @@ class Cursor(object):
         row = self._fetchone(parse = True)
         if len(self._description) != len(row):
             raise InternalError('Row description length (%s) does not match number of columns in row (%s)' %(len(self._description), len(row)))
-        logger.debug('Row %s', row)
+        logging.debug('Row %s', row)
         return row
 
     def fetchmany(self, size=arraysize):
