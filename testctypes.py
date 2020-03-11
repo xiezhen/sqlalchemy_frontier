@@ -208,6 +208,7 @@ def py_frontier_closeChannel(channel):
 
 def py_frontier_getRawData(channel, uri):
     logger.debug('frontier_client.frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
+    #uri = bytes(str(uri),'ascii')
     retcode = libfc.frontier_getRawData(channel, uri)
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
@@ -288,10 +289,10 @@ py_frontier_init()
 def main():
     logging.basicConfig(level = logging.DEBUG)   
     url = 'http://cmsfrontier.cern.ch:8000/LumiCalc'
-
+    url = bytes(url, 'ascii')
     channel = py_frontier_createChannel(url,None)
     uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
-    
+    uri = bytes(uri, 'ascii')
     try:
         py_frontier_getRawData(channel, uri)
     except FrontierClientError as e:
@@ -300,7 +301,7 @@ def main():
     
     rs = py_frontierRSBlob_open(channel, None, 1)
     rowcount = py_frontierRSBlob_getRecNum(rs)
-    print 'rowcount ',rowcount
+    print('rowcount ',rowcount)
     py_frontier_closeChannel(channel)
     
 if __name__=='__main__':

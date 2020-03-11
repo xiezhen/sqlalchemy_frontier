@@ -1,7 +1,7 @@
 import re
 import os.path
 
-from urllib import unquote
+from urllib.parse import unquote
 import xml.etree.ElementTree as ET
 
 def make_url(name_or_url):
@@ -87,14 +87,14 @@ def _frontierconnectparse(filename):
 
 if __name__=='__main__':
     e = 'frontier://cmsfrontier.cern.ch:8000/LumiCalc'
-    print e,make_url(e)
+    print(e,make_url(e))
         
     b = 'frontier:///x/d/d/site-local-config.xml/LumiCalc'
-    print b,make_url(b)
+    print(b,make_url(b))
     c = 'frontier:////absolute/path/to/site-local-config.xml/LumiCalc'
-    print c,make_url(c)
+    print(c,make_url(c))
 
-    print frontierconnectparse('site-local-config.xml')
+    print(_frontierconnectparse('site-local-config.xml'))
    
     #d = 'frontier://@(serverurl=http://cmsfrontier.cern.ch:8000/LumiCalc)(serverurl=http://cmsfrontier3.cern.ch:8000/LumiCalc)(serverurl=http://cmsfrontier4.cern.ch:8000/LumiCalc)(proxyurl=http://cmst0frontier.cern.ch:3128)'
     
