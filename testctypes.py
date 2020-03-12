@@ -292,8 +292,9 @@ def main():
     #url = bytes(url, 'ascii')
     url = str(url).encode('ascii')
     channel = py_frontier_createChannel(url,None)
-    uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
-    uri = bytes(uri, 'ascii')
+    #uri = b"Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
+    uri = b"Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=b'eNoLZmBgcAViHyjtDMQhQKwAZTsCcTBUTAOI1YG4BIhTgbgYygapzWMAAMruBak_'"
+    #uri = bytes(uri, 'ascii')
     try:
         py_frontier_getRawData(channel, uri)
     except FrontierClientError as e:

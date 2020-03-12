@@ -2,7 +2,7 @@ import os
 import sys
 import ctypes
 import logging
-
+import base64
 libsuffix = None
 if os.name == "posix" and sys.platform == "darwin":
     libsuffix = ".dylib"
@@ -186,6 +186,10 @@ def _build_frontierRSBlob_get(f):
 def py_frontier_createChannel(serverURL = None, proxyURL = None):
     #logging.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
     retcode = ctypes.c_int(FRONTIER_OK)
+    if serverURL:
+        serverURL = str.encode(serverURL,'ascii')
+    if proxyURL:
+        proxyURL = str.encode(proxyURL,'ascii')
     channel = libfc.frontier_createChannel(serverURL, proxyURL, ctypes.byref(retcode))
     retcode = retcode.value
     if retcode != FRONTIER_OK:
@@ -239,6 +243,11 @@ def py_frontier_closeChannel(channel):
 
 def py_frontier_getRawData(channel, uri):
     logging.debug('py_frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
+    print('uri type',type(uri))
+    if uri:
+        uri = str.encode(uri,'ascii')
+        print(type(uri))
+        print(uri)
     retcode = libfc.frontier_getRawData(channel, uri)
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())

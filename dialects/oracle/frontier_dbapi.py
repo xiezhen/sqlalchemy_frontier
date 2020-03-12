@@ -2,13 +2,13 @@
 This module implements the Python Database API Specification V2.0, http://www.python.org/dev/peps/pep-0249
 '''
 
-import exceptions
+#import exceptions
 import datetime
 import time
 import re
 import collections
 import logging
-import frontier_client_ctypes as frontier_client
+from . import frontier_client_ctypes as frontier_client
 import ctypes
 
 try:
@@ -30,7 +30,7 @@ _separatorchar = ':'
 Date = datetime.date
 Time = datetime.time
 Timestamp = datetime.datetime
-Binary = buffer
+Binary = memoryview
 
 #logger = logging.getLogger(__name__)
 #logformatter = logging.Formatter('%(levelname)s %(name)s %(message)s')
@@ -71,10 +71,10 @@ def connect(server_url = None, proxy_url = None, ttl = 1 ):
 
 #Exceptions
 
-class Error(exceptions.StandardError):
+class Error(Exception):
     pass
 
-class Warning(exceptions.StandardError):
+class Warning(Exception):
     pass
 
 class InterfaceError(Error):
