@@ -289,7 +289,8 @@ py_frontier_init()
 def main():
     logging.basicConfig(level = logging.DEBUG)   
     url = 'http://cmsfrontier.cern.ch:8000/LumiCalc'
-    url = bytes(url, 'ascii')
+    #url = bytes(url, 'ascii')
+    url = str(url).encode('ascii')
     channel = py_frontier_createChannel(url,None)
     uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
     uri = bytes(uri, 'ascii')
