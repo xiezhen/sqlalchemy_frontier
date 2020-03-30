@@ -166,7 +166,7 @@ class FrontierClientError(Exception):
 def py_frontier_createChannel(serverURL = None, proxyURL = None):
     logger.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
     retcode = ctypes.c_int(FRONTIER_OK)
-    channel = libfc.frontier_createChannel(serverURL, proxyURL, ctypes.byref(retcode))
+    channel = libfc.frontier_createChannel(serverURL.encode(), proxyURL, ctypes.byref(retcode))
     retcode = retcode.value
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
@@ -209,7 +209,7 @@ def py_frontier_closeChannel(channel):
 def py_frontier_getRawData(channel, uri):
     logger.debug('frontier_client.frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
     #uri = bytes(str(uri),'ascii')
-    retcode = libfc.frontier_getRawData(channel, uri)
+    retcode = libfc.frontier_getRawData(channel, uri.encode())
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
 
@@ -271,7 +271,7 @@ def fn_gzip_str2urlenc(string):
     '''
     logger.debug('frontier_client.fn_gzip_str2urlenc(string = %s)', repr(string))
     buf = ctypes.c_void_p()
-    buflen = libfc.fn_gzip_str2urlenc(string, len(string), ctypes.byref(buf))
+    buflen = libfc.fn_gzip_str2urlenc(string.encode(), len(string), ctypes.byref(buf))
     if buflen < 0 :
         raise FrontierClientError(None, 'Impossible to encode.')
     s = ctypes.string_at(buf.value, buflen)
@@ -290,16 +290,17 @@ def main():
     logging.basicConfig(level = logging.DEBUG)   
     url = 'http://cmsfrontier.cern.ch:8000/LumiCalc'
     #url = bytes(url, 'ascii')
-    url = str(url).encode('ascii')
+    #url = str(url).encode('ascii')
     channel = py_frontier_createChannel(url,None)
-    #uri = b"Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
-    uri = b"Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=b'eNoLZmBgcAViHyjtDMQhQKwAZTsCcTBUTAOI1YG4BIhTgbgYygapzWMAAMruBak_'"
+    uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
+    #uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=b'eNoLZmBgcAViHyjtDMQhQKwAZTsCcTBUTAOI1YG4BIhTgbgYygapzWMAAMruBak_'"
     #uri = bytes(uri, 'ascii')
     try:
         py_frontier_getRawData(channel, uri)
     except FrontierClientError as e:
-        self._reset()
-        raise ProgrammingError('Error while fetching data: %s' %e)
+        print ('Error while fetching data: %s' %e)
+        #self._reset()
+        #raise ProgrammingError('Error while fetching data: %s' %e)
     
     rs = py_frontierRSBlob_open(channel, None, 1)
     rowcount = py_frontierRSBlob_getRecNum(rs)
