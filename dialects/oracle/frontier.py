@@ -32,5 +32,6 @@ class OracleDialect_frontier(FrontierConnector, OracleDialect):
     statement_compiler = OracleCompiler_frontier
     def _get_default_schema_name(self, connection):
         return self.url_database
-
+    def _get_server_version_info(self, connection):
+        return (9,0)
 dialect = OracleDialect_frontier
