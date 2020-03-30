@@ -10,7 +10,7 @@ import collections
 import logging
 from . import frontier_client_ctypes as frontier_client
 import ctypes
-
+import sys
 try:
     import pytz
 except ImportError:
@@ -30,7 +30,7 @@ _separatorchar = ':'
 Date = datetime.date
 Time = datetime.time
 Timestamp = datetime.datetime
-Binary = memoryview
+Binary = bytearray
 
 #logger = logging.getLogger(__name__)
 #logformatter = logging.Formatter('%(levelname)s %(name)s %(message)s')
@@ -197,7 +197,18 @@ class Cursor(object):
             if data_type & frontier_client.BLOB_TYPE_NONE:
                 row.append(None)
                 continue
-            value = frontier_client.py_frontierRSBlob_getByteArray(self._result)
+            # Normal value. For the moment, Frontier *always* uses
+            # frontier_client.BLOB_TYPE_ARRAY_BYTE (i.e. returns all values
+            # as strings) and the client needs to parse the first record
+            # (type information) to convert the value to the proper type.
+            if data_type != frontier_client.BLOB_TYPE_ARRAY_BYTE:
+                raise InternalError('Unexpected data type (%s).' % data_type)
+
+            decode_value = False
+            if sys.version_info[0]>2:
+                if (not parse) or (not self._description[i][1] in ('BLOB', 'CLOB')):
+                    decode_value = True
+            value = frontier_client.py_frontierRSBlob_getByteArray(self._result,decode_value)
             if parse:
                 columnType = self._description[i][1]
                 if 'CHAR' in columnType or columnType == 'ROWID':
@@ -256,8 +267,25 @@ class Cursor(object):
         Prepare and execute a database operation (query or command).
         '''
         self._check_closed()
+        # Find the variables, e.g. [':name', ':1', ':ROWNUM_1']
+        # XXX: We would need a proper Oracle SQL parser here. At the moment,
+        # users are not be able to use the ':' character in a string literal
+        # if followed by letters/numbers/underscore. A workaround for them
+        # is to use "select ':' || 'abc'" instead of "select ':abc'".
+        if isinstance(operation, bytes):
+            operation = operation.decode()
+            sparameters = {}
+            if parameters:
+                for p in parameters:
+                    sparameters[p.decode()] = parameters[p]
+                parameters = sparameters
         variables = re.findall(':[a-zA-Z-0-9_]+', operation)
         logging.debug('Variables = %s', variables)
+        # Build the SQL and parameter list as the Frontier server expects:
+        #
+        # ''' Support bind variables in queries, with a question mark where
+        #     each variable is to be inserted.  The values for the variables
+        #     must be appended to the query, separated by colons (:). '''
         final_parameters = []
         if parameters is None:
             if len(variables) != 0:
@@ -266,16 +294,22 @@ class Cursor(object):
             if len(parameters) != len(variables):
                 raise ProgrammingError('Different length on parameters (%s) and bind variables list (%s) while using positional parameters.' %(len(parameters), len(variables)))
 
-                for i in range(len(variables)):
-                    operation = operation.replace(variables[i], _paramchar, 1) 
-                    final_parameters = parameters
+            for i in range(len(variables)):
+                operation = operation.replace(variables[i], _paramchar, 1) 
+            final_parameters = parameters
+
         elif isinstance(parameters, collections.Mapping):
             for variable in variables:
-                operation = operation.replace(variable, _paramchar, 1)
-                final_parameters.append(parameters[variable[1:]])
+                if isinstance(parameters[variable[1:]],datetime.datetime):
+                    operation = operation.replace(variable,_stringify(parameters[variable[1:]]))
+                else:
+                    operation = operation.replace(variable, _paramchar, 1)
+                    final_parameters.append(parameters[variable[1:]])
         else:
             raise ProgrammingError('Unsupported parameters type (%s).'%type(parameters))
         final_parameters = [_stringify(x) for x in final_parameters]
+        # XXX: Check there are no colons (:) in any value (it is not supported
+        # by the Frontier server yet -- there is no way to escape them)
         for parameter in final_parameters:
             if _separatorchar in parameter:
                 raise ProgrammingError("Unsupported character '%s' in parameter(%s)." %(_separatorchar, parameter))
@@ -287,7 +321,7 @@ class Cursor(object):
         logging.debug('Query to Frontier = %s', operation)
         
         # Build the URI
-        uri = 'Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=%s'%frontier_client.py_fn_gzip_str2urlenc(operation)
+        uri = 'Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=%s'%frontier_client.py_fn_gzip_str2urlenc(operation,decode=sys.version_info[0]>2)
         try:
             frontier_client.py_frontier_getRawData(self._connection._channel, uri)
         except frontier_client.FrontierClientError as e:
