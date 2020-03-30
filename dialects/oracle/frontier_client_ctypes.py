@@ -187,9 +187,9 @@ def py_frontier_createChannel(serverURL = None, proxyURL = None):
     #logging.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
     retcode = ctypes.c_int(FRONTIER_OK)
     if serverURL:
-        serverURL = str.encode(serverURL,'ascii')
+        serverURL = serverURL.encode()
     if proxyURL:
-        proxyURL = str.encode(proxyURL,'ascii')
+        proxyURL = proxyURL.encode()
     channel = libfc.frontier_createChannel(serverURL, proxyURL, ctypes.byref(retcode))
     retcode = retcode.value
     if retcode != FRONTIER_OK:
@@ -243,11 +243,8 @@ def py_frontier_closeChannel(channel):
 
 def py_frontier_getRawData(channel, uri):
     logging.debug('py_frontier_getRawData(channel = %s, uri = %s)', repr(channel), repr(uri) )
-    print('uri type',type(uri))
     if uri:
-        uri = str.encode(uri,'ascii')
-        print(type(uri))
-        print(uri)
+        uri = uri.encode()
     retcode = libfc.frontier_getRawData(channel, uri)
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
@@ -280,7 +277,7 @@ py_frontierRSBlob_getDouble = _build_frontierRSBlob_get(libfc.frontierRSBlob_get
 py_frontierRSBlob_getFloat = _build_frontierRSBlob_get(libfc.frontierRSBlob_getFloat)
 
 
-def py_frontierRSBlob_getByteArray(rs):
+def py_frontierRSBlob_getByteArray(rs,decode=False):
     buflen = py_frontierRSBlob_getInt(rs)
     retcode = ctypes.c_int(FRONTIER_OK)
     buf = libfc.frontierRSBlob_getByteArray(rs, buflen, ctypes.byref(retcode))
@@ -288,7 +285,7 @@ def py_frontierRSBlob_getByteArray(rs):
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
     s = ctypes.string_at(buf, buflen)
-    return s
+    return s.decode() if decode else s
 
 def py_frontierRSBlob_getRecNum(rs):
     '''
@@ -303,25 +300,26 @@ def py_frontier_mem_free(address):
     '''
     ctypes.CFUNCTYPE(None, ctypes.c_void_p)(ctypes.c_void_p.in_dll(libfc, 'frontier_mem_free').value)(address)
 
-def py_fn_gzip_str2urlenc(string):
+def py_fn_gzip_str2urlenc(string, decode=False):
     '''
     gzip string then 64base encode to ascii 
     fn-zlib.c
     '''
     logging.debug('py_fn_gzip_str2urlenc(string = %s)', repr(string))
     buf = ctypes.c_void_p()
-    buflen = libfc.fn_gzip_str2urlenc(string, len(string), ctypes.byref(buf))
+    buflen = libfc.fn_gzip_str2urlenc(string.encode(), len(string), ctypes.byref(buf))
     if buflen < 0 :
         raise FrontierClientError(None, 'Impossible to encode.')
     s = ctypes.string_at(buf.value, buflen)
     py_frontier_mem_free(buf.value)
-    return s
-    
+    #return s
+    return s.decode() if decode else s
+
 def py_frontier_init():
     logging.debug('py_frontier_init()')
     retcode = libfc.frontier_init(None, None)
     logging.debug('retcode '+str(retcode))
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
-
+ 
 py_frontier_init()
