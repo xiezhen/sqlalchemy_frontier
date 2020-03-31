@@ -28,7 +28,7 @@ def _frontierconnectparse(filename):
     else:
         frcon = root.find('.//frontier-connect')
     for child in frcon:
-        attrname = child.attrib.keys()[0]
+        attrname = list(child.attrib)[0]
         result.setdefault(child.tag+attrname,[]).append(child.attrib[attrname])
     return result
 
