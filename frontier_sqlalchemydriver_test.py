@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-#import sqlalchemy.dialects.oracle.frontier
-from dialects import oracle
+import sqlalchemy.dialects.oracle.frontier
+#from dialects import oracle
 import logging
 import sys
 def main():
@@ -10,7 +10,7 @@ def main():
     #urlstr = 'oracle+frontier:////home/zhen/work/sqlalchemy_frontier/site-local-config.xml/LumiCalc'
     #urlstr = 'oracle+frontier:////home/zhen/work/sqlalchemy_frontier/t3site-local-config.xml/LumiCalc'
     #urlstr = 'oracle+frontier:////home/zhen/work/sqlalchemy_frontier/kitsite-local-config.xml/LumiCalc'
-    engine = create_engine(urlstr)
+    engine = create_engine(urlstr,connect_args = {'ttl':2})
     connection = engine.connect() 
     r = connection.execute('select count(*) as nt from CMS_LUMI_PROD.HFOC_RESULT_4 where RUNNUM=278875 and lsnum>840')
     for row in r:
