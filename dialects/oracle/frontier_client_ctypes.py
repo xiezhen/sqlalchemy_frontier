@@ -144,12 +144,12 @@ frontier_getRawData.argtypes = [ctypes.c_ulong,ctypes.c_char_p]
 #frontier.h frontier_creatChannel
 frontier_createChannel = libfc.frontier_createChannel
 frontier_createChannel.restype = ctypes.c_ulong
-frontier_createChannel.argtype = [ctypes.c_char_p,ctypes.c_char,ctypes.POINTER(ctypes.c_int) ]
+frontier_createChannel.argtypes = [ctypes.c_char_p,ctypes.c_char_p,ctypes.POINTER(ctypes.c_int) ]
 
 #frontier.h frontier_setTimeToLive
 frontier_setTimeToLive = libfc.frontier_setTimeToLive
 frontier_setTimeToLive.restype = None
-frontier_setTimeToLive.argtype = [ctypes.c_ulong, ctypes.c_int]
+frontier_setTimeToLive.argtypes = [ctypes.c_ulong, ctypes.c_int]
 
 #frontier.h frontier_closeChannel
 frontier_closeChannel = libfc.frontier_closeChannel
