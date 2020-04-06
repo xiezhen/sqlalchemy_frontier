@@ -57,7 +57,7 @@ class FrontierConnector(Connector):
         if host and database:
             if url.port:
                 port = url.port
-            server_url = 'http://'+urllib.unquote_plus(host)+':'+str(port)+'/'+database
+            server_url = 'http://'+urllib.parse.unquote_plus(host)+':'+str(port)+'/'+database
         elif not host and database:
             s = os.path.split(database)
             if len(s)<2 or not s[0] or not s[1]:
