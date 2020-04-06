@@ -149,7 +149,12 @@ frontier_getRawData.argtypes = [ctypes.c_ulong,ctypes.c_char_p]
 #frontier.h frontier_creatChannel
 frontier_createChannel = libfc.frontier_createChannel
 frontier_createChannel.restype = ctypes.c_ulong
-frontier_createChannel.argtype = [ctypes.c_char_p,ctypes.c_char,ctypes.POINTER(ctypes.c_int) ]
+frontier_createChannel.argtypes = [ctypes.c_char_p,ctypes.c_char_p,ctypes.POINTER(ctypes.c_int) ]
+
+#frontier.h frontier_setTimeToLive
+frontier_setTimeToLive = libfc.frontier_setTimeToLive
+frontier_setTimeToLive.restype = None
+frontier_setTimeToLive.argtypes = [ctypes.c_ulong, ctypes.c_int]
 
 #frontier.h frontier_closeChannel
 frontier_closeChannel = libfc.frontier_closeChannel
@@ -166,12 +171,20 @@ class FrontierClientError(Exception):
 def py_frontier_createChannel(serverURL = None, proxyURL = None):
     logger.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s)', repr(serverURL), repr(proxyURL) )
     retcode = ctypes.c_int(FRONTIER_OK)
-    channel = libfc.frontier_createChannel(serverURL.encode(), proxyURL, ctypes.byref(retcode))
+    if serverURL:
+        serverURL = serverURL.encode()
+    if proxyURL:
+        proxyURL = proxyURL.encode()
+    channel = libfc.frontier_createChannel(serverURL, proxyURL, ctypes.byref(retcode))
     retcode = retcode.value
     if retcode != FRONTIER_OK:
         raise FrontierClientError(retcode, libfc.frontier_getErrorMsg())
     logger.debug('frontier_client.frontier_createChannel(serverURL = %s, proxyURL = %s) = %s', repr(serverURL), repr(proxyURL), channel)
     return channel
+
+def py_frontier_setTimeToLive(channel,ttl):
+    logging.debug('frontier_client.frontier_setTimeToLive(%d, %d)',channel,ttl)
+    libfc.frontier_setTimeToLive(channel,ttl)
 
 #frontierConfig.h
 frontierConfig_get = libfc.frontierConfig_get
@@ -292,6 +305,9 @@ def main():
     #url = bytes(url, 'ascii')
     #url = str(url).encode('ascii')
     channel = py_frontier_createChannel(url,None)
+    print('about to set ttl')
+    py_frontier_setTimeToLive(channel,2)
+    print('done')
     uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=eNorTs1JTS5RMFRIK8rPVUgpTcwBAD0rBmw_"
     #uri = "Frontier/type=frontier_request:1:DEFAULT&encoding=BLOBzip5&p1=b'eNoLZmBgcAViHyjtDMQhQKwAZTsCcTBUTAOI1YG4BIhTgbgYygapzWMAAMruBak_'"
     #uri = bytes(uri, 'ascii')
