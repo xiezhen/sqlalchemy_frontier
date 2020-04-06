@@ -109,7 +109,7 @@ class Connection(object):
         self._proxy_url = proxy_url
         self._ttl = ttl
         self._channel = frontier_client.py_frontier_createChannel(self._server_url, self._proxy_url)
-        #frontier_client.py_frontier_setTimeToLive(self._channel,ttl)
+        frontier_client.py_frontier_setTimeToLive(self._channel,ttl)
 
     def _check_closed(self):
         if self._closed:
