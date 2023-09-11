@@ -11,6 +11,7 @@ import logging
 from . import frontier_client_ctypes as frontier_client
 import ctypes
 import sys
+import re
 try:
     import pytz
 except ImportError:
@@ -19,7 +20,7 @@ except ImportError:
 
 #Globals
 #These module globals must be defined
-
+number_pattern = '^NUMBER\((\d+),?(\d+)?\)$'
 apilevel = '2.0'
 threadsafety = 1     #Threads may share the module, but not connections.
 paramstyle = 'named' #Named style, e.g. ...WHERE name=:name
@@ -66,7 +67,7 @@ def connect(server_url = None, proxy_url = None, ttl = 1 ):
      frontier://FrontierPrep
 
     Since this module should remain experiment-agnostic, users need to supply the proper way to fetch the complex URLs.
-    '''    
+    '''
     return Connection(server_url,proxy_url=proxy_url,ttl=ttl)
 
 #Exceptions
@@ -212,11 +213,15 @@ class Cursor(object):
             if parse:
                 columnType = self._description[i][1]
                 if 'CHAR' in columnType or columnType == 'ROWID':
-                    pass                
+                    pass
                 elif columnType.startswith('NUMBER'):
-                    value = float(value)
-                    if value.is_integer():
-                        value = int(value)
+                    m_result = re.match(number_pattern,columnType)
+                    precision = m_result.group(1)
+                    scale = m_result.group(2)
+                    if not scale:
+                      value = int(value)
+                    else:
+                      value = float(value)
                 elif columnType.startswith('BINARY_FLOAT') or columnType.startswith('BINARY_DOUBLE'):
                     value = float(value)
                 elif columnType in ('BLOB', 'CLOB'):
