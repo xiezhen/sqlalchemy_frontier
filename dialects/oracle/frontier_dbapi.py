@@ -6,7 +6,7 @@ This module implements the Python Database API Specification V2.0, http://www.py
 import datetime
 import time
 import re
-import collections
+import collections.abc as collections
 import logging
 from . import frontier_client_ctypes as frontier_client
 import ctypes
